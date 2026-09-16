@@ -1,0 +1,166 @@
+<Window x:Class="Backcrypter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Backcrypter · encrypted backups" Width="1060" Height="900"
+        MinWidth="860" MinHeight="720" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource PageBrush}" Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI" FontSize="13">
+        <Grid Margin="18" Background="{DynamicResource PageBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Margin="0,0,0,6">
+                <DockPanel>
+                    <CheckBox x:Name="DarkMode" Content="Dark mode" IsChecked="True" DockPanel.Dock="Right" HorizontalAlignment="Right" Click="ChangeTheme"/>
+                    <TextBlock Text="BACKCRYPTER" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" FontSize="12"/>
+                </DockPanel>
+                <TextBlock Text="Your files. Sealed for safekeeping." FontSize="22" FontWeight="SemiBold" Margin="0,5,0,5" TextWrapping="Wrap"/>
+                <TextBlock Text="Create one encrypted .bcrypt archive, or restore an existing backup." Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+            <TabControl x:Name="WorkflowTabs" Grid.Row="1" Margin="0,0,0,8" SelectionChanged="WorkflowChanged">
+            <TabItem Header="Create backup">
+            <Grid x:Name="CreatePanel" TextElement.Foreground="{DynamicResource TextBrush}">
+            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <ScrollViewer x:Name="CreateScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,8,0,0">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                <Grid x:Name="SelectionPanel">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <TextBlock Text="1   Select your files and folders" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,6"/>
+                    <WrapPanel Grid.Row="1" Margin="0,0,0,6">
+                        <Button Content="Add files…" Click="AddFiles"/>
+                        <Button Content="Add folders…" Click="AddFolders"/>
+                        <Button Content="Remove selected" Click="RemoveSources"/>
+                        <Button Content="Clear" Click="ClearSources"/>
+                    </WrapPanel>
+                    <ListBox x:Name="sources" Grid.Row="2" Height="70" SelectionMode="Extended"
+                             Padding="6" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             AutomationProperties.Name="Selected backup sources"/>
+                </Grid>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                <Grid x:Name="SecurityPanel">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.ColumnSpan="3" Margin="0,0,0,8">
+                        <TextBlock Text="2   Protect your backup" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,6"/>
+                        <Label Content="Protection" Target="{Binding ElementName=ProtectionMode}" Padding="0,0,0,3"/>
+                        <ComboBox x:Name="ProtectionMode" SelectedIndex="0" SelectionChanged="ProtectionChanged">
+                            <ComboBoxItem Content="Password only · AES-256-GCM"/>
+                            <ComboBoxItem Content="Password + key file · AES-256-GCM"/>
+                        </ComboBox>
+                        <TextBlock Text="Your password unlocks real encryption in either mode. A key file adds a second required secret." Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1">
+                        <Label Content="Password" Target="{Binding ElementName=password}" Padding="0,0,0,3"/>
+                        <Grid>
+                            <PasswordBox x:Name="password" AutomationProperties.Name="Password"/>
+                            <TextBox x:Name="VisiblePassword" Visibility="Collapsed" AutomationProperties.Name="Visible password"/>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="2">
+                        <Label Content="Confirm password (creation only)" Target="{Binding ElementName=confirmation}" Padding="0,0,0,3"/>
+                        <Grid>
+                            <PasswordBox x:Name="confirmation" AutomationProperties.Name="Confirm password"/>
+                            <TextBox x:Name="VisibleConfirmation" Visibility="Collapsed" AutomationProperties.Name="Visible confirmation"/>
+                        </Grid>
+                    </StackPanel>
+                    <CheckBox x:Name="ShowPassword" Grid.Row="2" Grid.ColumnSpan="3" Content="Show passwords" Margin="0,6,0,6" Checked="TogglePassword" Unchecked="TogglePassword"/>
+                    <StackPanel Grid.Row="3">
+                        <Label Content="Password work factor" Target="{Binding ElementName=work}" Padding="0,0,0,3"/>
+                        <ComboBox x:Name="work" SelectedIndex="0" Padding="8,6">
+                            <ComboBoxItem Content="Standard · 600,000 iterations"/>
+                            <ComboBoxItem Content="Strong · 1,200,000 iterations"/>
+                            <ComboBoxItem Content="Maximum · 2,400,000 iterations"/>
+                        </ComboBox>
+                        <TextBlock Text="Higher settings slow password guessing and unlocking." Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"/>
+                    </StackPanel>
+                    <StackPanel x:Name="CreateKeyPanel" Grid.Row="3" Grid.Column="2" IsEnabled="False">
+                        <Label Content="Key file (required in key-file mode)" Target="{Binding ElementName=keyFile}" Padding="0,0,0,3"/>
+                        <TextBox x:Name="keyFile" IsReadOnly="True" ToolTip="Leave empty for password-only protection"/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Choose…" Click="ChooseKey"/>
+                            <Button Content="New…" Click="GenerateKey"/>
+                            <Button Content="Clear" Click="ClearKey"/>
+                        </WrapPanel>
+                    </StackPanel>
+                    <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Margin="0,8,0,0" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap"
+                               Text="Keep your password and key file safe. Both are required when a key file is used; there is no recovery reset."/>
+                </Grid>
+            </Border>
+            </StackPanel>
+            </ScrollViewer>
+                <WrapPanel x:Name="ActionsPanel" Grid.Row="1" Margin="0,10,0,0">
+                    <Button Content="Create encrypted archive…" Click="CreateClicked" Background="#285998" Foreground="White" BorderBrush="#285998"/>
+                </WrapPanel>
+            </Grid>
+            </TabItem>
+            <TabItem Header="Restore / decrypt">
+                <Grid x:Name="RestorePanel" TextElement.Foreground="{DynamicResource TextBrush}">
+                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <ScrollViewer x:Name="RestoreScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,8,0,0">
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="1   Choose an archive and destination" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                            <Label Content="Encrypted archive" Target="{Binding ElementName=RestoreArchivePath}" Padding="0,0,0,3"/>
+                            <DockPanel Margin="0,0,0,8">
+                                <Button Content="Browse…" Click="BrowseRestoreArchive" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                                <TextBox x:Name="RestoreArchivePath"/>
+                            </DockPanel>
+                            <Label Content="Restore into a new folder" Target="{Binding ElementName=RestoreDestination}" Padding="0,0,0,3"/>
+                            <DockPanel>
+                                <Button Content="Browse…" Click="BrowseRestoreDestination" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                                <TextBox x:Name="RestoreDestination"/>
+                            </DockPanel>
+                            <TextBlock Text="Browse chooses a parent directory and suggests a new subfolder. You can edit the path. Existing folders are never overwritten." Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="2   Unlock your backup" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                            <TextBlock Text="Use the original password and key file, if one was used. Encryption settings are read from the archive automatically." Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                            <Label Content="Archive password" Target="{Binding ElementName=RestorePassword}" Padding="0,0,0,3"/>
+                            <Grid>
+                                <PasswordBox x:Name="RestorePassword"/>
+                                <TextBox x:Name="VisibleRestorePassword" Visibility="Collapsed" AutomationProperties.Name="Visible archive password"/>
+                            </Grid>
+                            <CheckBox x:Name="ShowRestorePassword" Content="Show password" Checked="ToggleRestorePassword" Unchecked="ToggleRestorePassword" Margin="0,6,0,8"/>
+                            <Label Content="Original key file (leave blank for password-only archives)" Target="{Binding ElementName=RestoreKeyFile}" Padding="0,0,0,3"/>
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                                    <Button Content="Choose…" Click="ChooseRestoreKey"/>
+                                    <Button Content="Clear" Click="ClearRestoreKey" Margin="0"/>
+                                </StackPanel>
+                                <TextBox x:Name="RestoreKeyFile" IsReadOnly="True"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                </ScrollViewer>
+                    <Button Grid.Row="1" Margin="0,10,0,0" Content="Decrypt and restore" Click="RestoreClicked" HorizontalAlignment="Left" Background="#285998" Foreground="White" BorderBrush="#285998"/>
+                </Grid>
+            </TabItem>
+            </TabControl>
+            <StackPanel Grid.Row="2">
+                <DockPanel Margin="0,0,0,8">
+                    <Button x:Name="cancel" Content="Cancel operation" DockPanel.Dock="Right" IsEnabled="False" Click="CancelOperation" Margin="8,0,0,0"/>
+                    <TextBlock Text="Activity" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </DockPanel>
+                <ProgressBar x:Name="progressBar" Height="6" Minimum="0" Maximum="100"/>
+                <TextBlock x:Name="status" Text="Ready. Select files and folders to protect." Margin="0,5,0,5" TextTrimming="CharacterEllipsis"/>
+                <Border Background="#171D26" CornerRadius="8" Padding="8">
+                    <RichTextBox x:Name="console" Height="60" IsReadOnly="True" Background="Transparent" Foreground="#9CDEBC"
+                                 BorderThickness="0" FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto"
+                                 AutomationProperties.Name="Operation log">
+                        <FlowDocument PagePadding="0"><Paragraph Margin="0"/></FlowDocument>
+                    </RichTextBox>
+                </Border>
+            </StackPanel>
+        </Grid>
+</Window>
+

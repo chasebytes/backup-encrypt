@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Backcrypter/Backcrypter.csproj" />
+  <Project Path="Backcrypter.Core/Backcrypter.Core.csproj" />
+  <Project Path="Backcrypter.Core.Tests/Backcrypter.Core.Tests.csproj" />
+</Solution>
